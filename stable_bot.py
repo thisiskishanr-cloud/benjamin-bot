@@ -1,6 +1,6 @@
 import os
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from groq import Groq
 from flask import Flask
 import threading
@@ -31,11 +31,11 @@ threading.Thread(target=run_flask, daemon=True).start()
 
 
 # /start command
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Holey cheese! I'm Benjamin 🐭\nReady for an adventure? Say hi!")
+def start(update, context):
+    update.message.reply_text("Holey cheese! I'm Benjamin 🐭\nReady for an adventure? Say hi!")
 
 # AI Reply Logic
-async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def reply(update, context):
     user_msg = update.message.text
 
     try:
@@ -53,18 +53,20 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         )
         reply_text = response.choices[0].message.content
-        await update.message.reply_text(reply_text)
+        update.message.reply_text(reply_text)
 
     except Exception as e:
         print(f"Error: {e}")
-        await update.message.reply_text("Oops! My whiskers are tingling... something went wrong! 🧀")
+        update.message.reply_text("Oops! My whiskers are tingling... something went wrong! 🧀")
 
 # Main Application
 if __name__ == "__main__":
-    app = ApplicationBuilder().token(TOKEN).build()
+    updater = Updater(TOKEN, use_context=True)
+    dp = updater.dispatcher
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply))
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, reply))
 
     print("Benjamin is awake and looking for cheese... (Bot is running)")
-    app.run_polling()
+    updater.start_polling()
+    updater.idle()
