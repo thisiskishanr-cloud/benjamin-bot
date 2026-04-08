@@ -5,6 +5,13 @@ from groq import Groq
 from flask import Flask
 import threading
 
+import sys
+import types
+
+imghdr = types.ModuleType("imghdr")
+imghdr.what = lambda *args: None
+sys.modules["imghdr"] = imghdr
+
 # 1. SETUP - Use environment variables for security!
 # In your terminal, run: export TELEGRAM_TOKEN='your_token' and export GROQ_API_KEY='your_key'
 TOKEN = os.getenv("TELEGRAM_TOKEN")
