@@ -1,9 +1,3 @@
-import os
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from groq import Groq
-from flask import Flask
-import threading
 
 import sys
 import types
@@ -11,6 +5,13 @@ import types
 imghdr = types.ModuleType("imghdr")
 imghdr.what = lambda *args: None
 sys.modules["imghdr"] = imghdr
+
+import os
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from groq import Groq
+from flask import Flask
+import threading
 
 # 1. SETUP - Use environment variables for security!
 # In your terminal, run: export TELEGRAM_TOKEN='your_token' and export GROQ_API_KEY='your_key'
