@@ -1,5 +1,12 @@
 import os
 import asyncio
+
+# Fix for Python 3.14 asyncio event loop issue (must be BEFORE pyrogram import)
+try:
+    asyncio.get_event_loop()
+except RuntimeError:
+    asyncio.set_event_loop(asyncio.new_event_loop())
+
 from pyrogram import Client, filters
 from groq import Groq
 
@@ -55,11 +62,6 @@ def reply(_, message):
         message.reply_text("Oops! Something went wrong 🧀")
 
 
- # Fix for Python 3.14 asyncio event loop issue
-try:
-    asyncio.get_event_loop()
-except RuntimeError:
-    asyncio.set_event_loop(asyncio.new_event_loop())
 
 print("Benjamin is running with Pyrogram...")
 app.run()
