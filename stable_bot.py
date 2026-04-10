@@ -1,58 +1,59 @@
-
-import sys
-import types
-
-imghdr = types.ModuleType("imghdr")
-imghdr.what = lambda *args: None
-sys.modules["imghdr"] = imghdr
-
 import os
-from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from pyrogram import Client, filters
 from groq import Groq
 from flask import Flask
 import threading
 
-# 1. SETUP - Use environment variables for security!
-# In your terminal, run: export TELEGRAM_TOKEN='your_token' and export GROQ_API_KEY='your_key'
-TOKEN = os.getenv("TELEGRAM_TOKEN")
+# ENV variables
+BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
 GROQ_KEY = os.getenv("GROQ_API_KEY")
-if not TOKEN or not GROQ_KEY:
-    raise ValueError("Missing TELEGRAM_TOKEN or GROQ_API_KEY environment variables")
+API_ID = int(os.getenv("API_ID"))
+API_HASH = os.getenv("API_HASH")
 
+if not BOT_TOKEN or not GROQ_KEY or not API_ID or not API_HASH:
+    raise ValueError("Missing required environment variables")
 
-client = Groq(api_key=GROQ_KEY)
+# Groq client
+client_groq = Groq(api_key=GROQ_KEY)
 
-# Tiny Flask server for uptime checks
-app_flask = Flask('')
+# Flask server (to prevent sleep)
+app_flask = Flask(__name__)
 
 @app_flask.route('/')
 def home():
     return "Benjamin is alive 🐭"
 
+
 def run_flask():
     port = int(os.environ.get("PORT", 10000))
     app_flask.run(host='0.0.0.0', port=port)
 
-# Run Flask in background thread
 threading.Thread(target=run_flask, daemon=True).start()
 
+# Pyrogram bot
+app = Client(
+    "benjamin-bot",
+    bot_token=BOT_TOKEN,
+    api_id=API_ID,
+    api_hash=API_HASH
+)
 
-# /start command
-def start(update, context):
-    update.message.reply_text("Holey cheese! I'm Benjamin 🐭\nReady for an adventure? Say hi!")
+@app.on_message(filters.command("start"))
+def start(_, message):
+    message.reply_text("Holey cheese! I'm Benjamin 🐭\nReady for an adventure!")
 
-# AI Reply Logic
-def reply(update, context):
-    user_msg = update.message.text
+
+@app.on_message(filters.text & ~filters.command(["start"]))
+def reply(_, message):
+    user_msg = message.text
 
     try:
-        response = client.chat.completions.create(
+        response = client_groq.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are Benjamin Stilton from Geronimo Stilton. You are young, smart, playful, and adventurous. Keep replies short and fun with mouse-related expressions."
+                    "content": "You are Benjamin Stilton. Keep replies short, fun, and playful like a curious mouse."
                 },
                 {
                     "role": "user",
@@ -60,21 +61,14 @@ def reply(update, context):
                 }
             ]
         )
+
         reply_text = response.choices[0].message.content
-        update.message.reply_text(reply_text)
+        message.reply_text(reply_text)
 
     except Exception as e:
         print(f"Error: {e}")
-        update.message.reply_text("Oops! My whiskers are tingling... something went wrong! 🧀")
+        message.reply_text("Oops! Something went wrong 🧀")
 
-# Main Application
-if __name__ == "__main__":
-    updater = Updater(TOKEN, use_context=True)
-    dp = updater.dispatcher
 
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, reply))
-
-    print("Benjamin is awake and looking for cheese... (Bot is running)")
-    updater.start_polling()
-    updater.idle()
+print("Benjamin is running with Pyrogram...")
+app.run()
