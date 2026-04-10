@@ -1,8 +1,6 @@
 import os
 from pyrogram import Client, filters
 from groq import Groq
-from flask import Flask
-import threading
 
 # ENV variables
 BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -15,20 +13,6 @@ if not BOT_TOKEN or not GROQ_KEY or not API_ID or not API_HASH:
 
 # Groq client
 client_groq = Groq(api_key=GROQ_KEY)
-
-# Flask server (to prevent sleep)
-app_flask = Flask(__name__)
-
-@app_flask.route('/')
-def home():
-    return "Benjamin is alive 🐭"
-
-
-def run_flask():
-    port = int(os.environ.get("PORT", 10000))
-    app_flask.run(host='0.0.0.0', port=port)
-
-threading.Thread(target=run_flask, daemon=True).start()
 
 # Pyrogram bot
 app = Client(
